@@ -1,7 +1,8 @@
-local curPing = 0
-local pingLimit = 0
+local curPing 	= 0
+local limit 	= GetConvarInt('pingkick', 150)
+local display 	= true
 
-local function IsPingOverLimit() return curPing >= pingLimit and true or false end
+local function IsPingOverLimit() return curPing >= limit and true or false end
 
 local function DrawTextOnScreen(text, x, y)
 	if IsPingOverLimit() == false then
@@ -19,26 +20,28 @@ local function DrawTextOnScreen(text, x, y)
 	EndTextCommandDisplayText(x, y)
 end
 
-RegisterNetEvent('ping:receive', function(what, value)
-	if what == 'ping' then
-		curPing = value
-	elseif what == 'limit' then
-		pingLimit = value
-	end
-end)
+local function Toggle(toggle)
+	display = toggle == nil and not display or toggle
 
-TriggerServerEvent('ping:request', 'limit')
+	TriggerEvent('chat:addMessage', 'Ping ' .. (display and 'Visible' or 'Hidden'))
+end
+
+RegisterNetEvent('ping:receive', function(ping) curPing = ping end)
 
 Citizen.CreateThread(function() -- Get ping from server every 5s
 	while true do
-		TriggerServerEvent('ping:request', 'ping')
+		if display then	TriggerServerEvent('ping:request') end
 		Citizen.Wait(5000)
 	end
 end)
 
 Citizen.CreateThread(function() -- Update Ping on Screen
 	while true do
+		if display then	DrawTextOnScreen(curPing .. 'ms' .. (IsPingOverLimit() and (' (Max: %dms)'):format(limit) or ''), 0.0009, 0.9798) end
 		Citizen.Wait(5)
-		DrawTextOnScreen(curPing .. 'ms' .. (IsPingOverLimit() and (' (Limite: %dms)'):format(pingLimit) or ''), 0.0009, 0.9798)
 	end
 end)
+
+RegisterNetEvent('ping:display', Toggle)
+
+RegisterCommand('ping', function() Toggle() end)
