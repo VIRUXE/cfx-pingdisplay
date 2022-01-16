@@ -42,6 +42,6 @@ Citizen.CreateThread(function() -- Update Ping on Screen
 	end
 end)
 
-RegisterNetEvent('ping:display', Toggle)
+RegisterNetEvent('ping:toggle', Toggle)
 
 RegisterCommand('ping', function() Toggle() end)
